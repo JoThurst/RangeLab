@@ -40,6 +40,8 @@ interface RangeState {
   ui: AppUiState;
 
   measuredLock: MeasuredShotLock | null;
+  importedBatch: MeasuredLaunch[];
+  importedBatchIndex: number;
   baselineResults: ShotResults | null;
   baselineInputs: ShotInputs | null;
   comparisonOverlays: EnvComparisonOverlay[];
@@ -68,6 +70,10 @@ interface RangeState {
   updateCustomClub: (id: string, partial: Partial<ClubPreset>) => void;
 
   importMeasuredLaunch: (launch: MeasuredLaunch, options?: { lock?: boolean }) => void;
+  importMeasuredBatch: (launches: MeasuredLaunch[], startIndex?: number) => void;
+  selectImportedShot: (index: number) => void;
+  stepImportedShot: (delta: number) => void;
+  importPracticeSession: (session: PracticeSession) => void;
   setMeasuredLock: (locked: boolean) => void;
   clearMeasuredLock: () => void;
 
@@ -142,6 +148,8 @@ export const useRangeStore = create<RangeState>((set, get) => ({
   },
 
   measuredLock: null,
+  importedBatch: [],
+  importedBatchIndex: 0,
   baselineResults: null,
   baselineInputs: null,
   comparisonOverlays: [],
@@ -251,15 +259,36 @@ export const useRangeStore = create<RangeState>((set, get) => ({
   },
 
   importMeasuredLaunch: (launch, options) => {
-    const lock = options?.lock !== false;
-    const nextInputs = applyMeasuredLaunch(get().inputs, launch);
+    get().importMeasuredBatch([launch], 0);
+    if (options?.lock === false) {
+      get().setMeasuredLock(false);
+    }
+  },
 
+  importMeasuredBatch: (launches, startIndex = 0) => {
+    if (!launches.length) return;
+    const index = Math.max(0, Math.min(startIndex, launches.length - 1));
+    const launch = launches[index];
+    let nextInputs = applyMeasuredLaunch(get().inputs, launch);
+
+    if (launch.windSpeedMph != null) nextInputs = { ...nextInputs, windSpeedMph: launch.windSpeedMph };
+    if (launch.windDirectionDeg != null) {
+      nextInputs = { ...nextInputs, windDirectionDeg: launch.windDirectionDeg };
+    }
+    if (launch.elevationFt != null) {
+      nextInputs = {
+        ...nextInputs,
+        elevationFt: launch.elevationFt,
+        airDensityKgM3: airDensityFromElevationFt(launch.elevationFt),
+      };
+    }
+
+    let selectedClubId = get().selectedClubId;
+    let clubs = get().clubs;
     if (launch.clubName) {
-      const existing = get().clubs.find(
-        (c) => c.name.toLowerCase() === launch.clubName!.toLowerCase(),
-      );
+      const existing = clubs.find((c) => c.name.toLowerCase() === launch.clubName!.toLowerCase());
       if (existing) {
-        set({ selectedClubId: existing.id });
+        selectedClubId = existing.id;
       } else {
         const custom = createCustomClub({
           name: launch.clubName,
@@ -269,21 +298,103 @@ export const useRangeStore = create<RangeState>((set, get) => ({
           backspinRpm: nextInputs.backspinRpm,
           spinAxisDeg: nextInputs.spinAxisDeg,
         });
-        set({ clubs: [...get().clubs, custom], selectedClubId: custom.id });
+        clubs = [...clubs, custom];
+        selectedClubId = custom.id;
       }
     }
 
     set({
+      clubs,
+      selectedClubId,
       inputs: nextInputs,
-      measuredLock: lock
+      importedBatch: launches,
+      importedBatchIndex: index,
+      measuredLock: {
+        locked: true,
+        sourceLabel: launch.sourceLabel ?? 'Trackman',
+        clubName: launch.clubName,
+        importedAt: Date.now(),
+      },
+      lastResults: null,
+      isPlaying: false,
+      playbackTime: 0,
+      ui: { ...get().ui, importOpen: false, resultsPanelOpen: true, controlPanelOpen: true },
+    });
+  },
+
+  selectImportedShot: (index) => {
+    const { importedBatch, activeSession } = get();
+    if (!importedBatch.length) return;
+    const i = Math.max(0, Math.min(index, importedBatch.length - 1));
+    const sessionShot =
+      activeSession && activeSession.shots.length === importedBatch.length
+        ? activeSession.shots[i]
+        : undefined;
+    get().importMeasuredBatch(importedBatch, i);
+    if (sessionShot) {
+      set({
+        lastResults: sessionShot.results,
+        inputs: { ...sessionShot.inputs },
+        isPlaying: true,
+        playbackTime: 0,
+      });
+    }
+  },
+
+  stepImportedShot: (delta) => {
+    const { importedBatch, importedBatchIndex } = get();
+    if (importedBatch.length < 2) return;
+    const next = (importedBatchIndex + delta + importedBatch.length) % importedBatch.length;
+    get().selectImportedShot(next);
+  },
+
+  importPracticeSession: (session) => {
+    const recent = [session, ...get().recentSessions.filter((s) => s.id !== session.id)].slice(
+      0,
+      20,
+    );
+    saveSessions(recent);
+    const launches: MeasuredLaunch[] = session.shots.map((s) => ({
+      ballSpeedMph: s.inputs.ballSpeedMph,
+      clubSpeedMph: s.inputs.clubSpeedMph,
+      launchAngleDeg: s.inputs.launchAngleDeg,
+      horizontalLaunchDeg: s.inputs.horizontalLaunchDeg,
+      backspinRpm: s.inputs.backspinRpm,
+      spinAxisDeg: s.inputs.spinAxisDeg,
+      clubName: s.clubName,
+      handedness: s.inputs.handedness,
+      sourceLabel: 'RangeLab Session',
+      windSpeedMph: s.inputs.windSpeedMph,
+      windDirectionDeg: s.inputs.windDirectionDeg,
+      elevationFt: s.inputs.elevationFt,
+    }));
+    const last = session.shots.at(-1);
+    const idx = Math.max(0, launches.length - 1);
+
+    set({
+      recentSessions: recent,
+      activeSession: session,
+      lastResults: last?.results ?? null,
+      inputs: last ? { ...last.inputs } : get().inputs,
+      importedBatch: launches,
+      importedBatchIndex: idx,
+      measuredLock: launches.length
         ? {
             locked: true,
-            sourceLabel: launch.sourceLabel ?? 'Trackman',
-            clubName: launch.clubName,
+            sourceLabel: 'RangeLab Session',
+            clubName: last?.clubName,
             importedAt: Date.now(),
           }
-        : get().measuredLock,
-      ui: { ...get().ui, importOpen: false, resultsPanelOpen: true },
+        : null,
+      isPlaying: false,
+      playbackTime: 0,
+      ui: {
+        ...get().ui,
+        importOpen: false,
+        sessionPanelOpen: true,
+        resultsPanelOpen: true,
+        controlPanelOpen: true,
+      },
     });
   },
 
@@ -293,7 +404,8 @@ export const useRangeStore = create<RangeState>((set, get) => ({
     set({ measuredLock: { ...current, locked } });
   },
 
-  clearMeasuredLock: () => set({ measuredLock: null }),
+  clearMeasuredLock: () =>
+    set({ measuredLock: null, importedBatch: [], importedBatchIndex: 0 }),
 
   saveBaseline: () => {
     const { lastResults, inputs } = get();

@@ -1,14 +1,20 @@
 import { useRef, useState } from 'react';
 import { useRangeStore } from '../../store/useRangeStore';
-import { parseTrackmanFile, type MeasuredLaunch } from '../../utils/trackmanImport';
+import {
+  parseImportFile,
+  sessionFromMeasuredLaunches,
+  type ImportFileResult,
+} from '../../utils/sessionImport';
+import type { MeasuredLaunch } from '../../utils/trackmanImport';
 
 export function TrackmanImportPanel() {
   const open = useRangeStore((s) => s.ui.importOpen);
   const setUi = useRangeStore((s) => s.setUi);
-  const importMeasuredLaunch = useRangeStore((s) => s.importMeasuredLaunch);
+  const inputs = useRangeStore((s) => s.inputs);
+  const importMeasuredBatch = useRangeStore((s) => s.importMeasuredBatch);
+  const importPracticeSession = useRangeStore((s) => s.importPracticeSession);
   const fileRef = useRef<HTMLInputElement>(null);
-  const [shots, setShots] = useState<MeasuredLaunch[]>([]);
-  const [warnings, setWarnings] = useState<string[]>([]);
+  const [parsed, setParsed] = useState<ImportFileResult | null>(null);
   const [selected, setSelected] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,28 +22,37 @@ export function TrackmanImportPanel() {
 
   const onFile = async (file: File) => {
     setError(null);
+    setParsed(null);
     try {
       const text = await file.text();
-      const result = parseTrackmanFile(text, file.name);
-      setWarnings(result.warnings);
-      setShots(result.shots);
-      setSelected(0);
+      const result = parseImportFile(text, file.name);
+      if (result.kind === 'session') {
+        setParsed(result);
+        return;
+      }
       if (!result.shots.length) {
         setError(result.warnings[0] ?? 'No shots found in file.');
+        setParsed(result);
+        return;
       }
+      setParsed(result);
+      setSelected(0);
     } catch {
       setError('Failed to read file.');
     }
   };
+
+  const launchShots: MeasuredLaunch[] =
+    parsed?.kind === 'launches' ? parsed.shots : [];
 
   return (
     <div className="absolute inset-x-2 top-14 z-40 flex justify-center animate-fade-in md:inset-x-8">
       <div className="panel w-full max-w-lg p-4">
         <div className="mb-3 flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold">Import Trackman / Launch Data</h3>
+            <h3 className="text-sm font-semibold">Import Shots / Session</h3>
             <p className="font-mono text-[10px] text-range-muted">
-              CSV or JSON · locks launch params for env what-ifs
+              Trackman JSON/CSV · or RangeLab session export
             </p>
           </div>
           <button
@@ -57,6 +72,7 @@ export function TrackmanImportPanel() {
           onChange={(e) => {
             const f = e.target.files?.[0];
             if (f) void onFile(f);
+            e.target.value = '';
           }}
         />
 
@@ -65,23 +81,41 @@ export function TrackmanImportPanel() {
         </button>
 
         <p className="mt-2 text-[11px] leading-relaxed text-range-muted">
-          Looks for Ball Speed, Club Speed, Launch Angle, Launch Direction, Spin Rate, and Spin
-          Axis columns (Trackman-style headers).
+          Import measured launch data, or re-open a RangeLab session JSON/CSV export to replay and
+          share with a coach.
         </p>
 
         {error && <p className="mt-2 text-xs text-range-danger">{error}</p>}
-        {warnings.length > 0 && !error && (
+        {parsed?.kind === 'launches' && parsed.warnings.length > 0 && !error && (
           <ul className="mt-2 space-y-0.5 text-[11px] text-range-warn">
-            {warnings.map((w) => (
+            {parsed.warnings.map((w) => (
               <li key={w}>{w}</li>
             ))}
           </ul>
         )}
 
-        {shots.length > 0 && (
+        {parsed?.kind === 'session' && (
+          <div className="mt-3 space-y-2">
+            <div className="rounded-lg border border-range-accent/30 bg-range-accent/10 px-3 py-2">
+              <p className="text-xs font-semibold text-range-accent">RangeLab session detected</p>
+              <p className="font-mono text-[11px] text-range-muted">
+                {parsed.session.name} · {parsed.session.shots.length} shots
+              </p>
+            </div>
+            <button
+              type="button"
+              className="btn btn-primary w-full"
+              onClick={() => importPracticeSession(parsed.session)}
+            >
+              Load Session
+            </button>
+          </div>
+        )}
+
+        {launchShots.length > 0 && (
           <div className="mt-3 space-y-2">
             <label className="block text-xs text-range-muted" htmlFor="import-shot">
-              Select shot ({shots.length} found)
+              Preview shot ({launchShots.length} found)
             </label>
             <select
               id="import-shot"
@@ -89,7 +123,7 @@ export function TrackmanImportPanel() {
               value={selected}
               onChange={(e) => setSelected(Number(e.target.value))}
             >
-              {shots.map((s, i) => (
+              {launchShots.map((s, i) => (
                 <option key={i} value={i}>
                   #{i + 1}
                   {s.clubName ? ` · ${s.clubName}` : ''} · {s.ballSpeedMph} mph
@@ -100,21 +134,40 @@ export function TrackmanImportPanel() {
             </select>
 
             <div className="grid grid-cols-2 gap-2 rounded-lg bg-white/[0.03] p-2 font-mono text-[11px]">
-              <span>Ball {shots[selected].ballSpeedMph} mph</span>
-              <span>Club {shots[selected].clubSpeedMph ?? '—'} mph</span>
-              <span>Launch {shots[selected].launchAngleDeg ?? '—'}°</span>
-              <span>Spin {shots[selected].backspinRpm ?? '—'} rpm</span>
-              <span>Axis {shots[selected].spinAxisDeg ?? '—'}°</span>
-              <span>Dir {shots[selected].horizontalLaunchDeg ?? '—'}°</span>
+              <span>Ball {launchShots[selected].ballSpeedMph} mph</span>
+              <span>Club {launchShots[selected].clubSpeedMph ?? '—'} mph</span>
+              <span>Launch {launchShots[selected].launchAngleDeg ?? '—'}°</span>
+              <span>Spin {launchShots[selected].backspinRpm ?? '—'} rpm</span>
+              <span>Axis {launchShots[selected].spinAxisDeg ?? '—'}°</span>
+              <span>Dir {launchShots[selected].horizontalLaunchDeg ?? '—'}°</span>
             </div>
 
             <button
               type="button"
               className="btn btn-primary w-full"
-              onClick={() => importMeasuredLaunch(shots[selected], { lock: true })}
+              onClick={() => importMeasuredBatch(launchShots, selected)}
             >
-              Apply & Lock Launch
+              {launchShots.length > 1
+                ? `Import ${launchShots.length} Shots (start at #${selected + 1})`
+                : 'Apply & Lock Launch'}
             </button>
+
+            {launchShots.length > 1 && (
+              <button
+                type="button"
+                className="btn w-full text-xs"
+                onClick={() => {
+                  const session = sessionFromMeasuredLaunches(
+                    launchShots,
+                    inputs,
+                    `Imported ${launchShots.length} shots`,
+                  );
+                  importPracticeSession(session);
+                }}
+              >
+                Load as practice session (re-simulate all)
+              </button>
+            )}
           </div>
         )}
       </div>

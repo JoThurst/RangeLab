@@ -156,6 +156,7 @@ export function SessionPanel() {
                         'application/json',
                       )
                     }
+                    title="Full session with trajectories — re-import via Import to reload"
                   >
                     Export JSON
                   </button>
@@ -170,10 +171,15 @@ export function SessionPanel() {
                         'text/csv',
                       )
                     }
+                    title="Spreadsheet of launch + results — re-import via Import"
                   >
                     Export CSV
                   </button>
                 </div>
+                <p className="text-[10px] text-range-muted">
+                  Exports are for sharing, coaching, or reloading later — use Import to bring them
+                  back in.
+                </p>
               </>
             )}
           </div>

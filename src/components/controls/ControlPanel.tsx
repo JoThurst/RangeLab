@@ -26,6 +26,9 @@ export function ControlPanel() {
   const measuredLock = useRangeStore((s) => s.measuredLock);
   const setMeasuredLock = useRangeStore((s) => s.setMeasuredLock);
   const clearMeasuredLock = useRangeStore((s) => s.clearMeasuredLock);
+  const importedBatch = useRangeStore((s) => s.importedBatch);
+  const importedBatchIndex = useRangeStore((s) => s.importedBatchIndex);
+  const stepImportedShot = useRangeStore((s) => s.stepImportedShot);
 
   if (!open) {
     return (
@@ -61,16 +64,16 @@ export function ControlPanel() {
         {measuredLock && (
           <div className="rounded-lg border border-range-accent/30 bg-range-accent/10 px-2.5 py-2">
             <div className="flex items-center justify-between gap-2">
-              <div>
+              <div className="min-w-0">
                 <p className="text-[10px] font-semibold uppercase tracking-wider text-range-accent">
                   {measuredLock.sourceLabel} launch
                 </p>
-                <p className="font-mono text-[10px] text-range-muted">
+                <p className="truncate font-mono text-[10px] text-range-muted">
                   {measuredLock.clubName ?? 'Measured'} ·{' '}
                   {launchLocked ? 'locked' : 'unlocked'}
                 </p>
               </div>
-              <div className="flex gap-1">
+              <div className="flex shrink-0 gap-1">
                 <button
                   type="button"
                   className="btn text-[10px] px-2 py-1"
@@ -87,6 +90,39 @@ export function ControlPanel() {
                 </button>
               </div>
             </div>
+
+            {importedBatch.length > 1 && (
+              <div className="mt-2 flex items-center gap-2">
+                <button
+                  type="button"
+                  className="btn px-2 py-1 text-sm"
+                  aria-label="Previous imported shot"
+                  onClick={() => stepImportedShot(-1)}
+                >
+                  ←
+                </button>
+                <div className="min-w-0 flex-1 text-center">
+                  <p className="font-mono text-xs tabular-nums text-range-text">
+                    Shot {importedBatchIndex + 1} / {importedBatch.length}
+                  </p>
+                  <p className="truncate font-mono text-[10px] text-range-muted">
+                    {importedBatch[importedBatchIndex]?.clubName ?? 'Shot'} ·{' '}
+                    {importedBatch[importedBatchIndex]?.ballSpeedMph ?? '—'} mph
+                    {importedBatch[importedBatchIndex]?.launchAngleDeg != null
+                      ? ` · ${importedBatch[importedBatchIndex].launchAngleDeg}°`
+                      : ''}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="btn px-2 py-1 text-sm"
+                  aria-label="Next imported shot"
+                  onClick={() => stepImportedShot(1)}
+                >
+                  →
+                </button>
+              </div>
+            )}
           </div>
         )}
 
