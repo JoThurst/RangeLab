@@ -44,8 +44,12 @@ function dragCoefficient(speedMs: number, spinRpm: number): number {
 
 function liftCoefficient(spinRpm: number, speedMs: number): number {
   const spinParam = (rpmToRadPerSec(spinRpm) * BALL_RADIUS) / Math.max(speedMs, 1);
-  // Empirical Cl curve for golf balls
-  return clamp(0.55 * (1 - Math.exp(-12 * spinParam)), 0.05, 0.35);
+  // Empirical Cl curve for golf balls, calibrated against TrackMan PGA Tour
+  // apex averages (~29-32yd, roughly flat across the bag). The previous curve
+  // saturated too quickly at low spin ratios, so low-spin/high-speed driver
+  // shots reached nearly the same Cl as high-spin wedges, blowing out driver
+  // apex (~70yd) relative to measured data.
+  return clamp(0.3 * (1 - Math.exp(-9 * spinParam)), 0.06, 0.25);
 }
 
 function windVelocity(inputs: ShotInputs): Vec3 {

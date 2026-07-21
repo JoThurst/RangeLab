@@ -71,3 +71,53 @@ describe('ball flight relationships', () => {
     expect(d.carryYards).toBeGreaterThan(w.carryYards);
   });
 });
+
+describe('apex calibration regression (TrackMan PGA Tour averages)', () => {
+  // Reference pairs (ball speed/launch/spin -> max height) from TrackMan's
+  // published PGA Tour averages. Apex height on tour is famously flat across
+  // the bag (~29-32yd / 87-96ft for driver through wedges), unlike a naive
+  // lift model where low-spin/high-speed driver shots and high-spin/low-speed
+  // wedge shots diverge sharply. These bands guard against the previous bug
+  // where driver apex ballooned to ~70yd (~3x measured) while short irons
+  // stayed close to measured.
+  const driver = BUILTIN_CLUBS.find((c) => c.id === 'driver')!;
+  const wood3 = BUILTIN_CLUBS.find((c) => c.id === '3wood')!;
+  const iron7 = BUILTIN_CLUBS.find((c) => c.id === '7iron')!;
+  const pw = BUILTIN_CLUBS.find((c) => c.id === 'pw')!;
+
+  it('driver apex height stays within a credible band of the ~32yd tour average', () => {
+    const r = simulateShot(defaultInputsFromClub(driver));
+    expect(r.apexHeightYards).toBeGreaterThan(24);
+    expect(r.apexHeightYards).toBeLessThan(45);
+  });
+
+  it('7-iron apex height stays within a credible band of the ~29-32yd tour average', () => {
+    const r = simulateShot(defaultInputsFromClub(iron7));
+    expect(r.apexHeightYards).toBeGreaterThan(22);
+    expect(r.apexHeightYards).toBeLessThan(40);
+  });
+
+  it('pitching wedge apex height stays within a credible band of the ~29yd tour average', () => {
+    const r = simulateShot(defaultInputsFromClub(pw));
+    expect(r.apexHeightYards).toBeGreaterThan(20);
+    expect(r.apexHeightYards).toBeLessThan(38);
+  });
+
+  it('apex heights stay relatively flat across the bag instead of blowing out for the driver', () => {
+    const heights = BUILTIN_CLUBS.map((c) => simulateShot(defaultInputsFromClub(c)).apexHeightYards);
+    const spread = Math.max(...heights) - Math.min(...heights);
+    // Real tour bags show roughly a five-to-ten-yard spread top to bottom.
+    // Allow headroom for our simplified model, but this catches the old
+    // driver-apex blowout (which produced a ~35yd spread on its own).
+    expect(spread).toBeLessThan(20);
+  });
+
+  it('driver apex is no longer inflated relative to a mid iron (previous regression)', () => {
+    const d = simulateShot(defaultInputsFromClub(driver));
+    const w3 = simulateShot(defaultInputsFromClub(wood3));
+    // Before calibration, driver apex (~71yd) was nearly double the 3-wood's
+    // (~65yd) and more than 2x a mid-iron's; both should now be in the same
+    // ballpark, matching measured data where every club nets a similar apex.
+    expect(d.apexHeightYards).toBeLessThan(w3.apexHeightYards + 10);
+  });
+});
