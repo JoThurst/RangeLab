@@ -103,6 +103,8 @@ src/
   utils/       # Storage, export, session stats
 ```
 
+Agent / multitask handoff: see [AGENTS.md](AGENTS.md) and [docs/](docs/).
+
 ## License
 
 MIT
