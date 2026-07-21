@@ -59,6 +59,33 @@ export function sessionToJson(session: PracticeSession): string {
   return JSON.stringify(session, null, 2);
 }
 
+/** Compact text summary for pasting into chat/email when sharing with a coach. */
+export function sessionShareSummary(session: PracticeSession): string {
+  const stats = computeSessionStats(session.shots);
+  const lines = [
+    `RangeLab session: ${session.name}`,
+    `Shots: ${stats.shotCount}/${session.targetShots}`,
+    `Avg carry: ${stats.avgCarry} yd · Avg total: ${stats.avgTotal} yd`,
+    `Longest total: ${stats.longestTotal} yd · Consistency: ${stats.carryConsistency}`,
+    `Avg |offline|: ${stats.avgOffline} yd · L-R spread: ${stats.leftRightDispersion} yd`,
+  ];
+  if (session.note?.trim()) {
+    lines.push(`Note: ${session.note.trim()}`);
+  }
+  if (session.shots.length) {
+    lines.push('Shots:');
+    for (const shot of session.shots) {
+      lines.push(
+        `  #${shot.index} ${shot.clubName}: ${shot.results.carryYards}/${shot.results.totalYards} yd · ${shot.results.shotShape} · offline ${shot.results.offlineYards} yd`,
+      );
+    }
+  }
+  lines.push(
+    'Full tracers: share the Export JSON file and open it via Session → Load shared session (or Import).',
+  );
+  return lines.join('\n');
+}
+
 export function sessionToCsv(session: PracticeSession): string {
   const header = [
     'index',

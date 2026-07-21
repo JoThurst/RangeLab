@@ -39,6 +39,27 @@ describe('session export round-trip', () => {
     expect(parsed.session.shots[0].results.trajectory.length).toBeGreaterThan(10);
   });
 
+  it('preserves coach note through JSON round-trip', () => {
+    const withNote: PracticeSession = {
+      ...session,
+      note: '  Focus on face control — fade bias  ',
+    };
+    const json = sessionToJson(withNote);
+    const parsed = parseImportFile(json, 'session-note.json');
+    expect(parsed.kind).toBe('session');
+    if (parsed.kind !== 'session') return;
+    expect(parsed.session.note).toBe('Focus on face control — fade bias');
+    expect(parsed.session.shots[0].results.trajectory.length).toBeGreaterThan(10);
+  });
+
+  it('omits empty note on normalize', () => {
+    const withEmpty: PracticeSession = { ...session, note: '   ' };
+    const parsed = parseImportFile(sessionToJson(withEmpty), 'empty-note.json');
+    expect(parsed.kind).toBe('session');
+    if (parsed.kind !== 'session') return;
+    expect(parsed.session.note).toBeUndefined();
+  });
+
   it('reimports RangeLab session CSV as launch rows', () => {
     const csv = sessionToCsv(session);
     const parsed = parseImportFile(csv, 'session-test.csv');

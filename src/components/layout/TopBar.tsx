@@ -43,9 +43,19 @@ export function TopBar() {
             </button>
           </>
         ) : (
-          <button type="button" className="btn text-xs" onClick={() => startSession()}>
-            10-Ball Session
-          </button>
+          <>
+            <button
+              type="button"
+              className="btn text-xs"
+              onClick={() => setUi({ sessionPanelOpen: true })}
+              title="Start a session or load a shared JSON"
+            >
+              Session
+            </button>
+            <button type="button" className="btn text-xs" onClick={() => startSession()}>
+              10-Ball Session
+            </button>
+          </>
         )}
         <button
           type="button"
