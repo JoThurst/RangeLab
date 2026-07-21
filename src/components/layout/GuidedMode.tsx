@@ -24,7 +24,7 @@ const STEPS = [
   },
   {
     title: 'Trackman What-Ifs',
-    body: 'Import a Trackman CSV/JSON to lock your measured launch. Then change wind, elevation, or course presets and re-launch — same fingerprint, different environment. Use Compare to overlay tracers and see carry deltas.',
+    body: 'Import (top bar) a Trackman CSV/JSON to lock your measured launch. The lock card in Shot Controls shows source, club, and shot index — launch stays locked while wind, elevation, and course presets stay editable. Use "Change environment & compare" or Compare: save a baseline, add course overlays, then re-launch to see carry/total/apex deltas. When the file includes measured carry/apex, Compare also shows Measured vs Simulated once the env differs from the import site.',
   },
 ];
 
@@ -37,7 +37,7 @@ export function GuidedMode() {
   const current = STEPS[step];
 
   return (
-    <div className="absolute bottom-16 left-1/2 z-30 w-[min(100%-1.5rem,28rem)] -translate-x-1/2 animate-fade-in">
+    <div className="absolute left-1/2 top-14 z-30 w-[min(100%-1.5rem,28rem)] -translate-x-1/2 animate-fade-in">
       <div className="panel p-4">
         <div className="mb-2 flex items-center justify-between">
           <h3 className="text-sm font-semibold">Guided Mode</h3>

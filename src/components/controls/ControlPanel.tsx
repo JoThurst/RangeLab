@@ -69,8 +69,10 @@ export function ControlPanel() {
                   {measuredLock.sourceLabel} launch
                 </p>
                 <p className="truncate font-mono text-[10px] text-range-muted">
-                  {measuredLock.clubName ?? 'Measured'} ·{' '}
-                  {launchLocked ? 'locked' : 'unlocked'}
+                  {measuredLock.clubName ?? 'Measured'}
+                  {importedBatch.length > 0
+                    ? ` · Shot ${importedBatchIndex + 1}/${importedBatch.length}`
+                    : ''}
                 </p>
               </div>
               <div className="flex shrink-0 gap-1">
@@ -90,6 +92,17 @@ export function ControlPanel() {
                 </button>
               </div>
             </div>
+
+            <p className="mt-1.5 flex items-center gap-1.5 rounded bg-black/15 px-1.5 py-1 font-mono text-[10px] text-range-muted">
+              <span
+                className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+                  launchLocked ? 'bg-range-accent' : 'bg-range-warn'
+                }`}
+              />
+              {launchLocked
+                ? 'Launch locked · environment stays editable'
+                : 'Launch unlocked · all fields editable'}
+            </p>
 
             {importedBatch.length > 1 && (
               <div className="mt-2 flex items-center gap-2">
@@ -123,6 +136,14 @@ export function ControlPanel() {
                 </button>
               </div>
             )}
+
+            <button
+              type="button"
+              className="btn mt-2 w-full text-[11px]"
+              onClick={() => setUi({ compareOpen: true, guidedModeOpen: false })}
+            >
+              Change environment &amp; compare →
+            </button>
           </div>
         )}
 

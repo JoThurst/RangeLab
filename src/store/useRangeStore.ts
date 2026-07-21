@@ -314,6 +314,10 @@ export const useRangeStore = create<RangeState>((set, get) => ({
         sourceLabel: launch.sourceLabel ?? 'Trackman',
         clubName: launch.clubName,
         importedAt: Date.now(),
+        importElevationFt: nextInputs.elevationFt,
+        measuredCarryYards: launch.carryYards,
+        measuredTotalYards: launch.totalYards,
+        measuredApexYards: launch.apexYards,
       },
       lastResults: null,
       isPlaying: false,
@@ -384,6 +388,7 @@ export const useRangeStore = create<RangeState>((set, get) => ({
             sourceLabel: 'RangeLab Session',
             clubName: last?.clubName,
             importedAt: Date.now(),
+            importElevationFt: last?.inputs.elevationFt,
           }
         : null,
       isPlaying: false,
@@ -413,7 +418,7 @@ export const useRangeStore = create<RangeState>((set, get) => ({
     set({
       baselineResults: lastResults,
       baselineInputs: { ...inputs },
-      ui: { ...get().ui, compareOpen: true },
+      ui: { ...get().ui, compareOpen: true, guidedModeOpen: false },
     });
   },
 
@@ -444,7 +449,7 @@ export const useRangeStore = create<RangeState>((set, get) => ({
     });
     set({
       comparisonOverlays: overlays.slice(-4),
-      ui: { ...get().ui, compareOpen: true },
+      ui: { ...get().ui, compareOpen: true, guidedModeOpen: false },
     });
   },
 
@@ -471,7 +476,7 @@ export const useRangeStore = create<RangeState>((set, get) => ({
         },
         ...comparisonOverlays,
       ].slice(0, 4),
-      ui: { ...get().ui, compareOpen: true },
+      ui: { ...get().ui, compareOpen: true, guidedModeOpen: false },
     });
   },
 
