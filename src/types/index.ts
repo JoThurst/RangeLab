@@ -137,6 +137,8 @@ export interface PracticeSession {
   updatedAt: number;
   shots: SessionShot[];
   targetShots: number;
+  /** Optional coach/player note carried through export/import for sharing context. */
+  note?: string;
 }
 
 export interface SessionStats {

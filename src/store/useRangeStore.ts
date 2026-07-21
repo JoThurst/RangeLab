@@ -90,23 +90,25 @@ interface RangeState {
   setIsPlaying: (v: boolean) => void;
   setPlaybackSpeed: (s: number) => void;
 
-  startSession: (name?: string) => void;
+  startSession: (name?: string, targetShots?: number) => void;
   endSession: () => void;
   toggleTracer: (shotId: string) => void;
   setReplayShot: (shotId: string | null) => void;
+  setSessionNote: (note: string) => void;
   loadSession: (sessionId: string) => void;
   deleteSession: (sessionId: string) => void;
 }
 
-function newSession(name?: string): PracticeSession {
+function newSession(name?: string, targetShots = 10): PracticeSession {
   const now = Date.now();
+  const goal = Math.max(1, Math.min(50, Math.round(targetShots) || 10));
   return {
     id: `session-${now}`,
     name: name ?? `Session ${new Date(now).toLocaleString()}`,
     createdAt: now,
     updatedAt: now,
     shots: [],
-    targetShots: 10,
+    targetShots: goal,
   };
 }
 
@@ -537,8 +539,8 @@ export const useRangeStore = create<RangeState>((set, get) => ({
   setIsPlaying: (v) => set({ isPlaying: v }),
   setPlaybackSpeed: (s) => set({ playbackSpeed: s }),
 
-  startSession: (name) => {
-    const session = newSession(name);
+  startSession: (name, targetShots) => {
+    const session = newSession(name, targetShots);
     set({
       activeSession: session,
       ui: { ...get().ui, sessionPanelOpen: true },
@@ -584,6 +586,23 @@ export const useRangeStore = create<RangeState>((set, get) => ({
       isPlaying: true,
       playbackTime: 0,
     });
+  },
+
+  setSessionNote: (note) => {
+    const { activeSession, recentSessions } = get();
+    if (!activeSession) return;
+    const trimmed = note.trim();
+    const nextSession: PracticeSession = {
+      ...activeSession,
+      note: trimmed || undefined,
+      updatedAt: Date.now(),
+    };
+    const nextRecent = [
+      nextSession,
+      ...recentSessions.filter((s) => s.id !== nextSession.id),
+    ].slice(0, 20);
+    saveSessions(nextRecent);
+    set({ activeSession: nextSession, recentSessions: nextRecent });
   },
 
   loadSession: (sessionId) => {

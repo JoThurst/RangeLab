@@ -33,12 +33,15 @@ function isPracticeSession(value: unknown): value is PracticeSession {
 
 function normalizeSession(raw: PracticeSession): PracticeSession {
   const now = Date.now();
+  const note =
+    typeof raw.note === 'string' && raw.note.trim() ? raw.note.trim() : undefined;
   return {
     id: raw.id || `session-${now}`,
     name: raw.name || `Imported Session ${new Date(now).toLocaleString()}`,
     createdAt: raw.createdAt || now,
     updatedAt: now,
     targetShots: Math.max(raw.targetShots || 10, raw.shots.length),
+    ...(note ? { note } : {}),
     shots: raw.shots.map((shot, i) => ({
       ...shot,
       id: shot.id || `shot-import-${now}-${i}`,
