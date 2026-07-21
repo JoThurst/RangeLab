@@ -13,6 +13,8 @@ export function EnvComparePanel() {
   const compareAgainstBaseline = useRangeStore((s) => s.compareAgainstBaseline);
   const toggleComparisonOverlay = useRangeStore((s) => s.toggleComparisonOverlay);
   const clearComparisons = useRangeStore((s) => s.clearComparisons);
+  const measuredLock = useRangeStore((s) => s.measuredLock);
+  const inputs = useRangeStore((s) => s.inputs);
 
   if (!open) return null;
 
@@ -24,6 +26,15 @@ export function EnvComparePanel() {
           apex: round1(lastResults.apexHeightYards - baselineResults.apexHeightYards),
         }
       : null;
+
+  const hasMeasuredTruth =
+    !!measuredLock &&
+    (measuredLock.measuredCarryYards != null ||
+      measuredLock.measuredTotalYards != null ||
+      measuredLock.measuredApexYards != null);
+  const envDrifted =
+    measuredLock?.importElevationFt != null &&
+    Math.round(measuredLock.importElevationFt) !== Math.round(inputs.elevationFt);
 
   return (
     <div className="absolute bottom-16 left-1/2 z-30 w-[min(100%-1rem,26rem)] -translate-x-1/2 animate-fade-in">
@@ -43,6 +54,38 @@ export function EnvComparePanel() {
             Close
           </button>
         </div>
+
+        {hasMeasuredTruth && (
+          <div className="mb-3 rounded-lg border border-range-border bg-white/[0.03] p-2">
+            <div className="mb-1.5 flex items-center justify-between gap-2">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-range-muted">
+                Measured / Simulated · Δ
+              </p>
+              {envDrifted && (
+                <span className="shrink-0 rounded bg-range-warn/15 px-1.5 py-0.5 font-mono text-[9px] text-range-warn">
+                  Env changed since import
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-3 gap-2 text-center">
+              <MeasuredVsSim
+                label="Carry"
+                measured={measuredLock?.measuredCarryYards}
+                simulated={lastResults?.carryYards}
+              />
+              <MeasuredVsSim
+                label="Total"
+                measured={measuredLock?.measuredTotalYards}
+                simulated={lastResults?.totalYards}
+              />
+              <MeasuredVsSim
+                label="Apex"
+                measured={measuredLock?.measuredApexYards}
+                simulated={lastResults?.apexHeightYards}
+              />
+            </div>
+          </div>
+        )}
 
         <div className="mb-3 flex flex-wrap gap-1.5">
           <button
@@ -162,4 +205,40 @@ function Delta({ label, value }: { label: string; value: number }) {
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
+}
+
+function MeasuredVsSim({
+  label,
+  measured,
+  simulated,
+}: {
+  label: string;
+  measured?: number;
+  simulated?: number;
+}) {
+  const delta = measured != null && simulated != null ? round1(simulated - measured) : null;
+  const color =
+    delta == null
+      ? 'text-range-muted'
+      : delta > 0
+        ? 'text-range-accent'
+        : delta < 0
+          ? 'text-range-warn'
+          : 'text-range-muted';
+  return (
+    <div>
+      <div className="metric-label">{label}</div>
+      <div className="font-mono text-[11px] tabular-nums text-range-text">
+        {measured != null ? `${measured} yd` : '—'}
+        <span className="text-range-muted"> / </span>
+        {simulated != null ? `${round1(simulated)} yd` : '—'}
+      </div>
+      {delta != null && (
+        <div className={`font-mono text-[10px] font-semibold tabular-nums ${color}`}>
+          {delta > 0 ? '+' : ''}
+          {delta} yd
+        </div>
+      )}
+    </div>
+  );
 }

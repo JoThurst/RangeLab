@@ -31,6 +31,27 @@ describe('Trackman import', () => {
     expect(result.shots[0].backspinRpm).toBe(3000);
   });
 
+  it('parses measured carry/total/apex when the file reports them', () => {
+    const csv = [
+      'Club,Ball Speed,Launch Angle,Spin Rate,Carry,Total,Apex Height',
+      'Driver,167.2,12.4,2480,268.4,289.1,31.2',
+    ].join('\n');
+
+    const result = parseTrackmanFile(csv, 'session.csv');
+    expect(result.shots[0].carryYards).toBeCloseTo(268.4);
+    expect(result.shots[0].totalYards).toBeCloseTo(289.1);
+    expect(result.shots[0].apexYards).toBeCloseTo(31.2);
+  });
+
+  it('parses measured carry/apex from JSON shot objects', () => {
+    const json = JSON.stringify({
+      shots: [{ BallSpeed: 155, LaunchAngle: 14, Carry: 240.5, Apex: 28.6 }],
+    });
+    const result = parseTrackmanFile(json, 'shots.json');
+    expect(result.shots[0].carryYards).toBe(240.5);
+    expect(result.shots[0].apexYards).toBe(28.6);
+  });
+
   it('applies measured launch while preserving environment', () => {
     const inputs = {
       ...defaultInputsFromClub(BUILTIN_CLUBS[0]),

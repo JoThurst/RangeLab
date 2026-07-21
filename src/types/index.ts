@@ -80,6 +80,12 @@ export interface MeasuredShotLock {
   sourceLabel: string;
   clubName?: string;
   importedAt: number;
+  /** Elevation captured at import time — used to detect when the current env has drifted from the import site. */
+  importElevationFt?: number;
+  /** Ground-truth results reported by the launch monitor, if the file included them (for measured-vs-simulated deltas). */
+  measuredCarryYards?: number;
+  measuredTotalYards?: number;
+  measuredApexYards?: number;
 }
 
 export interface EnvComparisonOverlay {

@@ -81,8 +81,8 @@ export function TrackmanImportPanel() {
         </button>
 
         <p className="mt-2 text-[11px] leading-relaxed text-range-muted">
-          Import measured launch data, or re-open a RangeLab session JSON/CSV export to replay and
-          share with a coach.
+          Import measured launch data to lock ball speed, angles, and spin — then change elevation or
+          course presets without unlocking. Or re-open a RangeLab session export to replay.
         </p>
 
         {error && <p className="mt-2 text-xs text-range-danger">{error}</p>}

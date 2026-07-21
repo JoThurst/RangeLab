@@ -16,6 +16,10 @@ export interface MeasuredLaunch {
   windSpeedMph?: number;
   windDirectionDeg?: number;
   elevationFt?: number;
+  /** Ground-truth carry/total/apex, if the launch monitor file reports them. Used for measured-vs-simulated deltas. */
+  carryYards?: number;
+  totalYards?: number;
+  apexYards?: number;
 }
 
 export interface TrackmanParseResult {
@@ -26,7 +30,15 @@ export interface TrackmanParseResult {
 const HEADER_ALIASES: Record<
   keyof Omit<
     MeasuredLaunch,
-    'clubName' | 'handedness' | 'sourceLabel' | 'windSpeedMph' | 'windDirectionDeg' | 'elevationFt'
+    | 'clubName'
+    | 'handedness'
+    | 'sourceLabel'
+    | 'windSpeedMph'
+    | 'windDirectionDeg'
+    | 'elevationFt'
+    | 'carryYards'
+    | 'totalYards'
+    | 'apexYards'
   >,
   string[]
 > = {
@@ -125,6 +137,23 @@ function mapHeaders(headers: string[]): Partial<Record<keyof MeasuredLaunch, num
   );
   if (elevIdx >= 0) map.elevationFt = elevIdx;
 
+  const carryIdx = normalized.findIndex((h) =>
+    ['carry', 'carry distance', 'carry (yds)', 'carry_yards', 'carry yds'].includes(h),
+  );
+  if (carryIdx >= 0) map.carryYards = carryIdx;
+
+  const totalIdx = normalized.findIndex((h) =>
+    ['total', 'total distance', 'carry + roll', 'total (yds)', 'total_yards', 'total yds'].includes(
+      h,
+    ),
+  );
+  if (totalIdx >= 0) map.totalYards = totalIdx;
+
+  const apexIdx = normalized.findIndex((h) =>
+    ['apex', 'apex height', 'max height', 'peak height', 'apex (yds)', 'apex_yards'].includes(h),
+  );
+  if (apexIdx >= 0) map.apexYards = apexIdx;
+
   return map;
 }
 
@@ -158,6 +187,9 @@ function rowToLaunch(
     windSpeedMph: parseNumber(get('windSpeedMph')),
     windDirectionDeg: parseNumber(get('windDirectionDeg')),
     elevationFt: parseNumber(get('elevationFt')),
+    carryYards: parseNumber(get('carryYards')),
+    totalYards: parseNumber(get('totalYards')),
+    apexYards: parseNumber(get('apexYards')),
     sourceLabel: 'Trackman',
   };
 
@@ -331,6 +363,9 @@ function objectToLaunch(r: Record<string, unknown>): MeasuredLaunch | null {
     windSpeedMph: pick('windSpeedMph', 'wind_mph', 'Wind Speed'),
     windDirectionDeg: pick('windDirectionDeg', 'wind_dir_deg', 'Wind Direction'),
     elevationFt: pick('elevationFt', 'elevation_ft', 'Elevation'),
+    carryYards: pick('carryYards', 'carry', 'Carry', 'carry_yards', 'Carry Distance'),
+    totalYards: pick('totalYards', 'total', 'Total', 'total_yards', 'Total Distance'),
+    apexYards: pick('apexYards', 'apex', 'Apex', 'apex_yards', 'Apex Height', 'Max Height'),
     clubName: clubNameRaw != null ? String(clubNameRaw) : undefined,
     handedness: hand === 'left' || hand === 'right' ? hand : undefined,
     sourceLabel: 'Trackman',
