@@ -6,6 +6,18 @@ import * as THREE from 'three';
 import type { CameraMode, FlightSample } from '../../types';
 import { mToScene, sampleAtTime } from './units';
 
+/** Default clip planes for close-up / orbit modes (ball near tee). */
+const DEFAULT_NEAR = 0.1;
+const DEFAULT_FAR = 800;
+
+/**
+ * Top-down camera sits ~Y 220 looking at mid-range.
+ * Wider near plane + tighter far improves depth precision across
+ * coplanar ground layers (tee through distant fence).
+ */
+const TOPDOWN_NEAR = 40;
+const TOPDOWN_FAR = 600;
+
 interface CameraRigProps {
   mode: CameraMode;
   trajectory: FlightSample[] | null;
@@ -35,6 +47,16 @@ export function CameraRig({ mode, trajectory, playbackTime, landingZ }: CameraRi
 
     const damp = 1 - Math.exp(-4 * dt);
     const cam = camera as THREE.PerspectiveCamera;
+
+    const applyClip =
+      mode === 'topdown'
+        ? { near: TOPDOWN_NEAR, far: TOPDOWN_FAR }
+        : { near: DEFAULT_NEAR, far: DEFAULT_FAR };
+    if (cam.near !== applyClip.near || cam.far !== applyClip.far) {
+      cam.near = applyClip.near;
+      cam.far = applyClip.far;
+      cam.updateProjectionMatrix();
+    }
 
     if (mode === 'behind') {
       const desired = new THREE.Vector3(0, 2.8, -8);
@@ -80,7 +102,7 @@ export function CameraRig({ mode, trajectory, playbackTime, landingZ }: CameraRi
 
   return (
     <>
-      <PerspectiveCamera makeDefault position={[0, 2.8, -8]} fov={55} near={0.1} far={800} />
+      <PerspectiveCamera makeDefault position={[0, 2.8, -8]} fov={55} near={DEFAULT_NEAR} far={DEFAULT_FAR} />
       <OrbitControls
         ref={orbitRef}
         enabled={mode === 'orbit'}
