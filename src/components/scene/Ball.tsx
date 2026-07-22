@@ -58,13 +58,12 @@ export function ShotTracer({
     const positions = trajectoryToScenePoints(trajectory, maxPoints);
     const geo = new THREE.BufferGeometry();
     geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    // Slightly brighter + thicker feel via linewidth where supported; opacity polish for depth
+    // depthWrite false keeps tracers from fighting ground under top-down (linewidth ignored in most WebGL)
     const mat = new THREE.LineBasicMaterial({
       color,
       transparent: true,
       opacity,
       depthWrite: false,
-      linewidth: 2,
     });
     return new THREE.Line(geo, mat);
   }, [trajectory, maxPoints, color, opacity]);

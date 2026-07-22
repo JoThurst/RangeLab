@@ -143,7 +143,7 @@ interface RangeSceneProps {
 export function RangeScene({ onReady }: RangeSceneProps) {
   const pixelRatioCap = useRangeStore((s) => s.performance.pixelRatioCap);
   const shadows = useRangeStore((s) => s.performance.shadows);
-  const dayAtm = getAtmosphere('day');
+  const initialAtm = getAtmosphere(useRangeStore.getState().weather);
 
   return (
     <Canvas
@@ -152,8 +152,8 @@ export function RangeScene({ onReady }: RangeSceneProps) {
       gl={{ antialias: true, powerPreference: 'high-performance', logarithmicDepthBuffer: true }}
       camera={{ position: [0, 2.8, -8], fov: 55, near: 0.1, far: 800 }}
       onCreated={({ gl }) => {
-        gl.setClearColor(dayAtm.clearColor);
-        gl.toneMappingExposure = dayAtm.exposure;
+        gl.setClearColor(initialAtm.clearColor);
+        gl.toneMappingExposure = initialAtm.exposure;
       }}
     >
       <Suspense fallback={null}>

@@ -11,8 +11,8 @@ const ROUGH_WIDTH = 90;
  * Distinct coplanar surfaces keep ≥0.05 separation so top-down views
  * (camera ~Y 220) do not z-fight between rough / fairway / tee / markings.
  *
- * Note: Ball.tsx LandingMarker rings still sit near Y 0.02–0.05 (above fairway,
- * below tee/greens). Raise those in a follow-up if markers must sit on greens.
+ * Landing markers (Ball.tsx) use Y ≥ 0.11; tee dressing / decor flats use ~0.10.
+ * Centerline 0.14 / greens 0.20 sit above those markings.
  */
 export const GROUND_Y = {
   rough: -0.06,
@@ -118,8 +118,8 @@ function TargetGreen({ position, radius }: { position: [number, number, number];
           polygonOffsetUnits={-2}
         />
       </mesh>
-      {/* Soft collar ring so green edge reads without fighting fairway */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, GROUND_Y.greens - 0.01, 0]}>
+      {/* Soft collar — ≥0.05 below green disc to avoid top-down flicker */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, GROUND_Y.greens - 0.05, 0]}>
         <ringGeometry args={[radius * 0.92, radius * 1.08, 32]} />
         <meshStandardMaterial
           color="#2d6a4f"
@@ -321,10 +321,10 @@ export function RangeEnvironment({ showLandingGrid, showDistanceMarkers }: Range
         <Tree key={i} position={pos} />
       ))}
 
-      {/* Back net / fence suggestion */}
+      {/* Back fence mass — keep low opacity; RangeDecor owns posts/cables/mesh detail */}
       <mesh position={[0, 4, RANGE_LENGTH + 8]}>
         <boxGeometry args={[ROUGH_WIDTH * 1.4, 8, 0.4]} />
-        <meshStandardMaterial color="#1a1f28" transparent opacity={0.55} roughness={0.9} />
+        <meshStandardMaterial color="#1a1f28" transparent opacity={0.22} roughness={0.9} depthWrite={false} />
       </mesh>
     </group>
   );

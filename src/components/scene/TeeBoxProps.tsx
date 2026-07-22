@@ -1,11 +1,11 @@
 /**
  * Tee-area dressing (mat, markers, bag). Mounted beside GolferTee.
  *
- * Y layer budget (scene units / yards):
- *   0.00  — fairway / rough planes (RangeEnvironment)
- *   0.05  — tee box plane (RangeEnvironment)
- *   0.10  — flat markings (mat edge, cart path, bunker sand)  ← this file + RangeDecor
- *   0.15+ — rings / plates / markers that sit above markings
+ * Y layer budget (scene units / yards) — align with RangeEnvironment GROUND_Y:
+ *   0.00  — fairway / rough
+ *   0.08  — tee pad top (thickened box in RangeEnvironment)
+ *   0.10  — flat markings (mat, cart path, bunker sand)  ← this file + RangeDecor
+ *   0.11+ — mat edges / landing rings
  *   0.40+ — solid props (bags, benches, posts)
  */
 
