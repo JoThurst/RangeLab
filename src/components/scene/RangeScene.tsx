@@ -10,6 +10,7 @@ import { CameraRig } from './CameraRig';
 import { TeeBoxProps } from './TeeBoxProps';
 import { RangeDecor } from './RangeDecor';
 import { RangeHinterland } from './RangeHinterland';
+import { RangeTrees } from './RangeTrees';
 function SceneContents({ onReady }: { onReady: () => void }) {
   const weather = useRangeStore((s) => s.weather);
   const atm = useMemo(() => getAtmosphere(weather), [weather]);
@@ -79,6 +80,7 @@ function SceneContents({ onReady }: { onReady: () => void }) {
         showLandingGrid={perf.showLandingGrid}
         showDistanceMarkers={perf.showDistanceMarkers}
       />
+      <RangeTrees shadows={perf.shadows} />
       <GolferTee handedness={inputs.handedness} />
       <TeeBoxProps shadows={perf.shadows} />
       <RangeDecor shadows={perf.shadows} />
