@@ -9,6 +9,7 @@ import { WindIndicators } from './WindIndicators';
 import { CameraRig } from './CameraRig';
 import { TeeBoxProps } from './TeeBoxProps';
 import { RangeDecor } from './RangeDecor';
+import { RangeHinterland } from './RangeHinterland';
 function SceneContents({ onReady }: { onReady: () => void }) {
   const weather = useRangeStore((s) => s.weather);
   const atm = useMemo(() => getAtmosphere(weather), [weather]);
@@ -73,6 +74,7 @@ function SceneContents({ onReady }: { onReady: () => void }) {
     <>
       <SkyLighting weather={weather} shadows={perf.shadows} />
       <fog attach="fog" args={[atm.fogColor, atm.fogNear, atm.fogFar]} />
+      <RangeHinterland shadows={perf.shadows} />
       <RangeEnvironment
         showLandingGrid={perf.showLandingGrid}
         showDistanceMarkers={perf.showDistanceMarkers}
