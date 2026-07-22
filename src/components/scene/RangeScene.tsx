@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useMemo } from 'react';
-import { Canvas } from '@react-three/fiber';
+import { Canvas, useThree } from '@react-three/fiber';
 import { useRangeStore } from '../../store/useRangeStore';
-import { SkyLighting } from './SkyLighting';
+import { SkyLighting, getAtmosphere } from './SkyLighting';
 import { RangeEnvironment } from './RangeEnvironment';
 import { GolferTee } from './GolferTee';
 import { Ball, LandingMarker, ShotTracer } from './Ball';
@@ -9,6 +9,8 @@ import { WindIndicators } from './WindIndicators';
 import { CameraRig } from './CameraRig';
 function SceneContents({ onReady }: { onReady: () => void }) {
   const weather = useRangeStore((s) => s.weather);
+  const atm = useMemo(() => getAtmosphere(weather), [weather]);
+  const { gl } = useThree();
   const perf = useRangeStore((s) => s.performance);
   const inputs = useRangeStore((s) => s.inputs);
   const cameraMode = useRangeStore((s) => s.cameraMode);
@@ -24,6 +26,12 @@ function SceneContents({ onReady }: { onReady: () => void }) {
   useEffect(() => {
     onReady();
   }, [onReady]);
+
+  // Keep clearColor + exposure paired with fog / SkyLighting presets on weather change.
+  useEffect(() => {
+    gl.setClearColor(atm.clearColor);
+    gl.toneMappingExposure = atm.exposure;
+  }, [gl, atm.clearColor, atm.exposure]);
 
   useEffect(() => {
     if (!isPlaying || !lastResults) return;
@@ -62,7 +70,7 @@ function SceneContents({ onReady }: { onReady: () => void }) {
   return (
     <>
       <SkyLighting weather={weather} shadows={perf.shadows} />
-      <fog attach="fog" args={['#87a0b8', 180, 420]} />
+      <fog attach="fog" args={[atm.fogColor, atm.fogNear, atm.fogFar]} />
       <RangeEnvironment
         showLandingGrid={perf.showLandingGrid}
         showDistanceMarkers={perf.showDistanceMarkers}
@@ -131,6 +139,7 @@ interface RangeSceneProps {
 export function RangeScene({ onReady }: RangeSceneProps) {
   const pixelRatioCap = useRangeStore((s) => s.performance.pixelRatioCap);
   const shadows = useRangeStore((s) => s.performance.shadows);
+  const dayAtm = getAtmosphere('day');
 
   return (
     <Canvas
@@ -139,7 +148,8 @@ export function RangeScene({ onReady }: RangeSceneProps) {
       gl={{ antialias: true, powerPreference: 'high-performance', logarithmicDepthBuffer: true }}
       camera={{ position: [0, 2.8, -8], fov: 55, near: 0.1, far: 800 }}
       onCreated={({ gl }) => {
-        gl.setClearColor('#87a0b8');
+        gl.setClearColor(dayAtm.clearColor);
+        gl.toneMappingExposure = dayAtm.exposure;
       }}
     >
       <Suspense fallback={null}>
