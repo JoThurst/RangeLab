@@ -7,6 +7,8 @@ import { GolferTee } from './GolferTee';
 import { Ball, LandingMarker, ShotTracer } from './Ball';
 import { WindIndicators } from './WindIndicators';
 import { CameraRig } from './CameraRig';
+import { TeeBoxProps } from './TeeBoxProps';
+import { RangeDecor } from './RangeDecor';
 function SceneContents({ onReady }: { onReady: () => void }) {
   const weather = useRangeStore((s) => s.weather);
   const atm = useMemo(() => getAtmosphere(weather), [weather]);
@@ -76,6 +78,8 @@ function SceneContents({ onReady }: { onReady: () => void }) {
         showDistanceMarkers={perf.showDistanceMarkers}
       />
       <GolferTee handedness={inputs.handedness} />
+      <TeeBoxProps shadows={perf.shadows} />
+      <RangeDecor shadows={perf.shadows} />
       <WindIndicators
         windSpeedMph={inputs.windSpeedMph}
         windDirectionDeg={inputs.windDirectionDeg}
