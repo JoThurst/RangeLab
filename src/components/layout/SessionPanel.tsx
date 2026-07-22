@@ -503,7 +503,7 @@ function CoachLoadBlock({
   onLoadPaste,
   compact,
 }: {
-  fileRef: RefObject<HTMLInputElement | null>;
+  fileRef: RefObject<HTMLInputElement>;
   pasteText: string;
   setPasteText: (v: string) => void;
   loadError: string | null;

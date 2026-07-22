@@ -68,6 +68,14 @@ Flight simulation lives in `src/physics/` and is independent of Three.js so it c
 
 ## Deploy
 
+### GitHub Pages
+
+Pushes to `main` build and deploy via [`.github/workflows/deploy-github-pages.yml`](.github/workflows/deploy-github-pages.yml).
+
+Live site: **https://jothurst.github.io/RangeLab/**
+
+Vite `base` is set to `/RangeLab/` for project Pages. After enabling Pages (Settings → Pages → Source: **GitHub Actions**), re-run the workflow if needed.
+
 ### Vercel
 
 The repo includes `vercel.json` (SPA rewrite).
