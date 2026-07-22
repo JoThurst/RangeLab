@@ -136,7 +136,7 @@ export function RangeScene({ onReady }: RangeSceneProps) {
     <Canvas
       shadows={shadows}
       dpr={[1, pixelRatioCap]}
-      gl={{ antialias: true, powerPreference: 'high-performance' }}
+      gl={{ antialias: true, powerPreference: 'high-performance', logarithmicDepthBuffer: true }}
       camera={{ position: [0, 2.8, -8], fov: 55, near: 0.1, far: 800 }}
       onCreated={({ gl }) => {
         gl.setClearColor('#87a0b8');
