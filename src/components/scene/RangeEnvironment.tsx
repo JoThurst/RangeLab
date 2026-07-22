@@ -2,9 +2,9 @@ import { useMemo } from 'react';
 import { Text, Billboard } from '@react-three/drei';
 import * as THREE from 'three';
 
-const RANGE_LENGTH = 320; // yards
-const FAIRWAY_WIDTH = 42;
-const ROUGH_WIDTH = 90;
+export const RANGE_LENGTH = 320; // yards
+export const FAIRWAY_WIDTH = 42;
+export const ROUGH_WIDTH = 90;
 
 /**
  * Ground depth layer budget (world Y).
@@ -55,26 +55,6 @@ function tintedGeometry(
   }
   geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
   return geo;
-}
-
-function Tree({ position }: { position: [number, number, number] }) {
-  const scale = 0.7 + ((position[0] * 13 + position[2] * 7) % 10) / 20;
-  return (
-    <group position={position} scale={scale}>
-      <mesh position={[0, 1.2, 0]} castShadow>
-        <cylinderGeometry args={[0.18, 0.28, 2.4, 6]} />
-        <meshStandardMaterial color="#5c4033" roughness={0.95} metalness={0} />
-      </mesh>
-      <mesh position={[0, 3.2, 0]} castShadow>
-        <coneGeometry args={[1.4, 3.2, 7]} />
-        <meshStandardMaterial color="#1b4332" roughness={0.9} metalness={0} />
-      </mesh>
-      <mesh position={[0, 4.6, 0]} castShadow>
-        <coneGeometry args={[1.0, 2.2, 7]} />
-        <meshStandardMaterial color="#2d6a4f" roughness={0.85} metalness={0} />
-      </mesh>
-    </group>
-  );
 }
 
 function DistanceMarker({ yards }: { yards: number }) {
@@ -227,34 +207,6 @@ export function RangeEnvironment({ showLandingGrid, showDistanceMarkers }: Range
     [],
   );
 
-  const trees = useMemo(() => {
-    const list: [number, number, number][] = [];
-    // Dense sideline belts + outer rings so the range feels wooded, not sparse
-    for (let z = 8; z < RANGE_LENGTH + 30; z += 10) {
-      const jitter = (z * 7) % 9;
-      list.push([-(ROUGH_WIDTH / 2 + 3), GROUND_Y.rough, z + (jitter % 5)]);
-      list.push([ROUGH_WIDTH / 2 + 4, GROUND_Y.rough, z + 3 + (jitter % 4)]);
-      list.push([-(ROUGH_WIDTH / 2 + 9), GROUND_Y.rough, z + 5]);
-      list.push([ROUGH_WIDTH / 2 + 10, GROUND_Y.rough, z + 1]);
-      if (z % 20 === 0) {
-        list.push([-(ROUGH_WIDTH / 2 + 16), GROUND_Y.rough, z + 6]);
-        list.push([ROUGH_WIDTH / 2 + 18, GROUND_Y.rough, z + 8]);
-        list.push([-(ROUGH_WIDTH / 2 + 22), GROUND_Y.rough, z + 2]);
-        list.push([ROUGH_WIDTH / 2 + 24, GROUND_Y.rough, z + 11]);
-      }
-      if (z % 30 === 0) {
-        list.push([-(ROUGH_WIDTH / 2 + 28), GROUND_Y.rough, z + 4]);
-        list.push([ROUGH_WIDTH / 2 + 30, GROUND_Y.rough, z + 7]);
-      }
-    }
-    // Clusters near the tee sides
-    for (let i = 0; i < 8; i++) {
-      list.push([-(22 + i * 3), GROUND_Y.rough, -8 + (i % 4) * 3]);
-      list.push([22 + i * 3, GROUND_Y.rough, -6 + (i % 3) * 4]);
-    }
-    return list;
-  }, []);
-
   const markers = [50, 100, 150, 200, 250, 300];
   // Tee pad top sits at GROUND_Y.tee; box extends downward by teeThickness.
   const teeCenterY = GROUND_Y.tee - GROUND_Y.teeThickness / 2;
@@ -332,10 +284,6 @@ export function RangeEnvironment({ showLandingGrid, showDistanceMarkers }: Range
       <TargetGreen position={[10, 0, 180]} radius={7} />
       <TargetGreen position={[-4, 0, 240]} radius={8} />
       <TargetGreen position={[6, 0, 300]} radius={9} />
-
-      {trees.map((pos, i) => (
-        <Tree key={i} position={pos} />
-      ))}
 
       {/* Back fence mass — keep low opacity; RangeDecor owns posts/cables/mesh detail */}
       <mesh position={[0, 4, RANGE_LENGTH + 8]}>
