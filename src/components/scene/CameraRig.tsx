@@ -16,7 +16,7 @@ const DEFAULT_FAR = 800;
  * coplanar ground layers (tee through distant fence).
  */
 const TOPDOWN_NEAR = 40;
-const TOPDOWN_FAR = 600;
+const TOPDOWN_FAR = 720;
 
 interface CameraRigProps {
   mode: CameraMode;

@@ -212,8 +212,9 @@ interface RangeEnvironmentProps {
 }
 
 export function RangeEnvironment({ showLandingGrid, showDistanceMarkers }: RangeEnvironmentProps) {
+  // Wider / longer rough so the playing surface feathers into the hinterland skirt
   const roughGeo = useMemo(
-    () => tintedGeometry(ROUGH_WIDTH * 2.2, RANGE_LENGTH + 40, 10, 24, ROUGH_RGB, { edgeDarken: 0.12 }),
+    () => tintedGeometry(ROUGH_WIDTH * 3.2, RANGE_LENGTH + 120, 14, 28, ROUGH_RGB, { edgeDarken: 0.18 }),
     [],
   );
   const fairwayGeo = useMemo(
@@ -228,13 +229,28 @@ export function RangeEnvironment({ showLandingGrid, showDistanceMarkers }: Range
 
   const trees = useMemo(() => {
     const list: [number, number, number][] = [];
-    for (let z = 20; z < RANGE_LENGTH; z += 18) {
-      list.push([-(ROUGH_WIDTH / 2 + 4), GROUND_Y.rough, z + (z % 11)]);
-      list.push([ROUGH_WIDTH / 2 + 5, GROUND_Y.rough, z + 7]);
-      if (z % 36 === 0) {
-        list.push([-(ROUGH_WIDTH / 2 + 10), GROUND_Y.rough, z + 4]);
-        list.push([ROUGH_WIDTH / 2 + 12, GROUND_Y.rough, z + 10]);
+    // Dense sideline belts + outer rings so the range feels wooded, not sparse
+    for (let z = 8; z < RANGE_LENGTH + 30; z += 10) {
+      const jitter = (z * 7) % 9;
+      list.push([-(ROUGH_WIDTH / 2 + 3), GROUND_Y.rough, z + (jitter % 5)]);
+      list.push([ROUGH_WIDTH / 2 + 4, GROUND_Y.rough, z + 3 + (jitter % 4)]);
+      list.push([-(ROUGH_WIDTH / 2 + 9), GROUND_Y.rough, z + 5]);
+      list.push([ROUGH_WIDTH / 2 + 10, GROUND_Y.rough, z + 1]);
+      if (z % 20 === 0) {
+        list.push([-(ROUGH_WIDTH / 2 + 16), GROUND_Y.rough, z + 6]);
+        list.push([ROUGH_WIDTH / 2 + 18, GROUND_Y.rough, z + 8]);
+        list.push([-(ROUGH_WIDTH / 2 + 22), GROUND_Y.rough, z + 2]);
+        list.push([ROUGH_WIDTH / 2 + 24, GROUND_Y.rough, z + 11]);
       }
+      if (z % 30 === 0) {
+        list.push([-(ROUGH_WIDTH / 2 + 28), GROUND_Y.rough, z + 4]);
+        list.push([ROUGH_WIDTH / 2 + 30, GROUND_Y.rough, z + 7]);
+      }
+    }
+    // Clusters near the tee sides
+    for (let i = 0; i < 8; i++) {
+      list.push([-(22 + i * 3), GROUND_Y.rough, -8 + (i % 4) * 3]);
+      list.push([22 + i * 3, GROUND_Y.rough, -6 + (i % 3) * 4]);
     }
     return list;
   }, []);
